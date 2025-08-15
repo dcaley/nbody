@@ -3,20 +3,16 @@ import 'package:flutter/material.dart';
 import 'home.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const NBody());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class NBody extends StatelessWidget {
+  const NBody({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: Home(),
-    );
-  }
+  Widget build(BuildContext context) => MaterialApp(
+    title: "N-Body",
+    debugShowCheckedModeBanner: false,
+    home: Home(),
+  );
 }

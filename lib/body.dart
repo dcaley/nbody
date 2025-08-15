@@ -2,20 +2,19 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:nbody/vector.dart';
 
-import 'core.dart';
+import 'vector.dart';
 
 abstract class Body{
   
-  Vector position;
-  Queue<Vector> history = Queue();
-  int historyLength = 5;
-  Vector velocity;
-  double mass;
-  Color color;
+  final Vector position;
+  final Queue<Vector> history = Queue();
+  final int historyLength = 5;
+  final Vector velocity;
+  final double mass;
+  final Color color;
   
-  Body({required this.position, required this.velocity, this.mass=1, this.color=Colors.white, Body? offset}){
+  Body({required this.position, required this.velocity, this.mass=0, this.color=Colors.white, Body? offset}){
     if(offset!=null){
       position.x += offset.position.x;
       position.y += offset.position.y;
@@ -31,12 +30,15 @@ abstract class Body{
     if(history.length>historyLength){
       history.removeFirst();
     }
+
+    // add velocity vector to position vector
     position.x += velocity.x;
     position.y += velocity.y;
     position.z += velocity.z;
   }
 
-  bool influencedBy(Body b) => b is Core;
+  // bodies with no mass have no effect
+  bool influencedBy(Body b) => b.mass > 0;
 
   //double distance(Body b) => sqrt(pow(position.x-b.position.x, 2)+pow(position.y-b.position.y, 2)+pow(position.z-b.position.z, 2));
 
