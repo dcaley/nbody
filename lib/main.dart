@@ -13,6 +13,6 @@ class NBody extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: "N-Body",
     debugShowCheckedModeBanner: false,
-    home: Home(),
+    home: Material(child: Home()),
   );
 }

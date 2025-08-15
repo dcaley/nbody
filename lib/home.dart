@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import 'screen_painter.dart';
 import 'star.dart';
 import 'vector.dart';
 import 'body.dart';
@@ -17,18 +17,28 @@ class Home extends StatefulWidget{
   State<StatefulWidget> createState() => HomeState();
 }
 
+// encapsulate values that we wish to pass to the painter
+class Values{
+  bool showHistory = true;
+  final List<Body> bodies = [];
+}
+
 class HomeState extends State<Home>{
 
-  final List<Body> bodies = [];
   final random = Random();
   final colors = [Colors.red, Colors.blue, Colors.green, Colors.yellow, Colors.purple];
   Timer? timer;
+  int galaxyCount = 3;
+  int starCount = 50;
+  final values = Values();
+
+  List<Body> get bodies => values.bodies;
 
   // the calculations are fully 3D, but constrain to x/y for now
   createGalaxy(double x, double y, double vx, double vy, Color color){
     final c = Core(position: Vector(x: x, y: y), velocity: Vector(x: vx, y: vy));
     bodies.add(c);
-    for(int i=0; i<50; i++){
+    for(int i=0; i<starCount; i++){
       // set a random distance from the core
       double theta = random.nextDouble()*pi*2;
       double r = 20.0+i;
@@ -58,7 +68,7 @@ class HomeState extends State<Home>{
     timer?.cancel();
     bodies.clear();
 
-    for(int i=0; i<5;){
+    for(int i=0; i<galaxyCount;){
       // space galaxy randomly around origin
       double theta = random.nextDouble()*pi*2;
       // and at a random distance
@@ -75,8 +85,8 @@ class HomeState extends State<Home>{
     }
 
     timer = Timer.periodic(Duration(milliseconds: 20), (t) {
-      // reset after 10 seconds
-      if(t.tick*20>10000) {
+      // reset after 15 seconds
+      if(t.tick*20>15000) {
         create();
       }
       else{
@@ -109,57 +119,41 @@ class HomeState extends State<Home>{
   }
 
   @override
-  Widget build(BuildContext context) => CallbackShortcuts(
-    // hit enter to restart simulation
-    bindings: <ShortcutActivator, VoidCallback>{
-      SingleActivator(LogicalKeyboardKey.enter) : create,
-    },
-    child: Focus(autofocus: true, child: CustomPaint(painter: ScreenPainter(bodies))),
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        // the empty child is needed to give the canvas a non-zero height
+        child: CustomPaint(painter: ScreenPainter(values), child: Container()),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: SizedBox(
+          width: 200,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButtonFormField<int>(
+                decoration: InputDecoration(labelText: "Number of Galaxies", border: OutlineInputBorder()),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                items: [2, 3, 4, 5].map((i) => DropdownMenuItem<int>(value: i, child: Text(i.toString()))).toList(),
+                value: galaxyCount,
+                onChanged: (v) => galaxyCount = v!,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Show History"),
+                  Switch(value: values.showHistory, onChanged: (v) => values.showHistory = v),
+                ],
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(onPressed: create, child: Text("Restart")),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
   );
-}
-
-class ScreenPainter extends CustomPainter{
-  
-  List<Body> bodies;
-
-  ScreenPainter(this.bodies);
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-
-    canvas.drawColor(Colors.black, BlendMode.src);
-
-    // put the origin in the middle of the screen
-    canvas.translate(size.width/2, size.height/2);
-
-    for (Body b in bodies) {
-      canvas.drawCircle(
-        Offset(b.position.x, b.position.y),
-        b.paintSize,
-        Paint()
-          ..color = b.color
-          ..style = PaintingStyle.fill,
-      );
-
-      // draw the "trails"
-      if(b.paintHistory) {
-        for (int i=0; i<b.history.length; i++) {
-          // line to the previous position, last one connects to the current position
-          final next = i+1 == b.history.length ? b.position : b.history.elementAt(i+1);
-          // drawing individual line segments instead of using a Path so we can control the alpha value
-          canvas.drawLine(
-            Offset(b.history.elementAt(i).x, b.history.elementAt(i).y),
-            Offset(next.x, next.y),
-            Paint()
-              ..strokeWidth = b.paintSize
-              ..color = b.color.withValues(alpha: i/b.history.length)
-              ..style = PaintingStyle.stroke,
-          );
-        }
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

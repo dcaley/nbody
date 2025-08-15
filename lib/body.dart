@@ -46,5 +46,5 @@ abstract class Body{
 
   double get paintSize;
 
-  bool get paintHistory => true;
+  bool get showHistory => true;
 }

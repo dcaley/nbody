@@ -7,5 +7,5 @@ class Core extends Body{
   double get paintSize => 5;
 
   @override
-  bool get paintHistory => false;
+  bool get showHistory => false;
 }
