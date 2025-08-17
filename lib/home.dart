@@ -19,7 +19,7 @@ class Home extends StatefulWidget{
 
 // encapsulate values that we wish to pass to the painter
 class Values{
-  bool showHistory = true;
+  bool showTrails = true;
   final List<Body> bodies = [];
 }
 
@@ -27,26 +27,33 @@ class HomeState extends State<Home>{
 
   final random = Random();
   final colors = [Colors.red, Colors.blue, Colors.green, Colors.yellow, Colors.purple];
-  Timer? timer;
+  Timer timer = Timer(Duration(), (){});
   int galaxyCount = 3;
+  int galaxyRadius = 100;
   int starCount = 50;
+  double coreMass = 1000;
   final values = Values();
 
   List<Body> get bodies => values.bodies;
 
   // the calculations are fully 3D, but constrain to x/y for now
   createGalaxy(double x, double y, double vx, double vy, Color color){
-    final c = Core(position: Vector(x: x, y: y), velocity: Vector(x: vx, y: vy));
+    final c = Core(
+      position: Vector(x: x, y: y),
+      velocity: Vector(x: vx, y: vy),
+      mass: coreMass,
+    );
     bodies.add(c);
     for(int i=0; i<starCount; i++){
-      // set a random distance from the core
-      double theta = random.nextDouble()*pi*2;
-      double r = 20.0+i;
-      double v = sqrt(1000/r);
+      // place the star at a random distance from the core, but not closer than 20
+      double r = 20+random.nextDouble()*(galaxyRadius-20);
+      // set the velocity of a circular orbit at that radius
+      double v = sqrt(c.mass/r);
       // add stars in orbit around the core
+      double theta = random.nextDouble()*pi*2;
       bodies.add(
         Star(
-          // rotate position around the core
+          // rotate around the core
           position: Vector(x: r*cos(theta), y: r*sin(theta)),
           // do the same for the velocity vector
           velocity: Vector(x: v*sin(-theta), y: v*cos(-theta)),
@@ -60,12 +67,13 @@ class HomeState extends State<Home>{
   @override
   initState(){
     create();
+    // defer because we need screen size
+    WidgetsBinding.instance.addPostFrameCallback((_) => startTimer());
     super.initState();
   }
 
   create(){
 
-    timer?.cancel();
     bodies.clear();
 
     for(int i=0; i<galaxyCount;){
@@ -84,15 +92,23 @@ class HomeState extends State<Home>{
       }
     }
 
+  }
+
+  startTimer(){
+    timer.cancel();
+    final Size size = MediaQuery.of(context).size;
+    Rect screen = Rect.fromLTWH(-size.width/2, -size.height/2, size.width, size.height);
     timer = Timer.periodic(Duration(milliseconds: 20), (t) {
-      // reset after 15 seconds
-      if(t.tick*20>15000) {
-        create();
-      }
-      else{
+      // reset if all cores have moved offscreen
+      if(bodies.whereType<Core>().any((c) => screen.contains(Offset(c.position.x, c.position.y)))){
         calc();
-        setState(() {});
       }
+      else {
+        create();
+        startTimer();
+      }
+
+      setState(() {});
     });
   }
 
@@ -132,20 +148,71 @@ class HomeState extends State<Home>{
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DropdownButtonFormField<int>(
-                decoration: InputDecoration(labelText: "Number of Galaxies", border: OutlineInputBorder()),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-                items: [2, 3, 4, 5].map((i) => DropdownMenuItem<int>(value: i, child: Text(i.toString()))).toList(),
-                value: galaxyCount,
-                onChanged: (v) => galaxyCount = v!,
+              getSlider(
+                title: "Galaxies",
+                value: galaxyCount.toDouble(),
+                min: 2,
+                max: 5,
+                divisions: 3,
+                ticks: 4,
+                labels: [2, 3, 4, 5].map((v) => Text(v.toStringAsFixed(0))).toList(),
+                callback: (v) => galaxyCount = v.toInt(),
               ),
+              SizedBox(height: 10),
+              getSlider(
+                title: "Galaxy Radius",
+                value: galaxyRadius.toDouble(),
+                min: 50,
+                max: 200,
+                divisions: 3,
+                labels: [50, 100, 150, 200].map((v) => Text(v.toStringAsFixed(0))).toList(),
+                callback: (v) => galaxyRadius = v.toInt(),
+              ),
+              SizedBox(height: 10),
+              getSlider(
+                title: "Stars",
+                value: starCount.toDouble(),
+                min: 20,
+                max: 100,
+                divisions: 8,
+                labels: [20, 100].map((v) => Text(v.toStringAsFixed(0))).toList(),
+                callback: (v) => starCount = v.toInt(),
+              ),
+              SizedBox(height: 10),
+              getSlider(
+                title: "Core Mass",
+                value: coreMass,
+                min: 100,
+                max: 10000,
+                divisions: 99,
+                labels: [2, 4].map((v) => Text("10^${v.toStringAsFixed(0)}")).toList(),
+                callback: (v) => coreMass = v,
+              ),
+              SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Show History"),
-                  Switch(value: values.showHistory, onChanged: (v) => values.showHistory = v),
+                  Text("Show Trails"),
+                  Switch(value: values.showTrails, onChanged: (v) => values.showTrails = v),
                 ],
               ),
+              SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    timer.isActive ? timer.cancel() : startTimer();
+                    setState(() {});
+                  },
+                  child: Text(timer.isActive ? "Pause" : "Resume"),
+                ),
+              ),
+              SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(onPressed: timer.isActive ? null : calc, child: Text("Step")),
+              ),
+              SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(onPressed: create, child: Text("Restart")),
@@ -156,4 +223,55 @@ class HomeState extends State<Home>{
       ),
     ],
   );
+
+  Widget getSlider({
+    required String title,
+    required double value,
+    required double min,
+    required double max,
+    required int divisions,
+    int ticks = 16,
+    required List<Widget> labels,
+    required Function(double) callback
+  }){
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: "$title: ${value.toStringAsFixed(0)}",
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(5)),
+      ),
+      child: Column(
+        children: [
+          Theme(
+            data: ThemeData(sliderTheme: SliderTheme.of(context).copyWith(overlayShape: SliderComponentShape.noThumb)),
+            child: Slider(
+              divisions: divisions,
+              min: min,
+              max: max,
+              value: value,
+              onChanged: callback,
+              label: value.toStringAsFixed(0),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(ticks, (index) => SizedBox(
+                    height: 5,
+                    child: VerticalDivider(width: 8),
+                  )),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: labels,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

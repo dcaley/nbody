@@ -29,21 +29,25 @@ class ScreenPainter extends CustomPainter{
       );
 
       // draw the "trails"
-      if(values.showHistory && b.showHistory) {
-        for (int i=0; i<b.history.length; i++) {
-          // line to the previous position, last one connects to the current position
-          final next = i+1 == b.history.length ? b.position : b.history.elementAt(i+1);
-          // drawing individual line segments instead of using a Path so we can control the alpha value
-          // TODO but the performance sucks
-          canvas.drawLine(
-            Offset(b.history.elementAt(i).x, b.history.elementAt(i).y),
-            Offset(next.x, next.y),
-            Paint()
-              ..strokeWidth = b.paintSize
-              ..color = b.color.withValues(alpha: i/b.history.length)
-              ..style = PaintingStyle.stroke,
-          );
+      if(values.showTrails && b.showTrails && b.history.isNotEmpty) {
+
+        final path = Path()..moveTo(b.position.x, b.position.y);
+        for(int i=b.history.length-1; i>=0; i--){
+          path.lineTo(b.history.elementAt(i).x, b.history.elementAt(i).y);
         }
+
+        canvas.drawPath(path, Paint()
+          ..strokeWidth = b.paintSize
+          //..color = b.color
+          ..shader = LinearGradient(
+            colors: [
+              b.color,
+              b.color.withValues(alpha: 0),
+            ],
+          ).createShader(Rect.fromLTRB(b.position.x, b.position.y, b.history.first.x, b.history.first.y))
+          ..strokeWidth = b.paintSize
+          ..style = PaintingStyle.stroke,
+        );
       }
     }
   }
