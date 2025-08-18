@@ -20,6 +20,7 @@ class Home extends StatefulWidget{
 // encapsulate values that we wish to pass to the painter
 class Values{
   bool showTrails = true;
+  bool follow = false;
   final List<Body> bodies = [];
 }
 
@@ -27,6 +28,7 @@ class HomeState extends State<Home>{
 
   final random = Random();
   final colors = [Colors.red, Colors.blue, Colors.green, Colors.yellow, Colors.purple];
+  // placeholder so this can be non-null
   Timer timer = Timer(Duration(), (){});
   int galaxyCount = 3;
   int galaxyRadius = 100;
@@ -119,11 +121,11 @@ class HomeState extends State<Home>{
           double dx = b1.position.x - b2.position.x;
           double dy = b1.position.y - b2.position.y;
           double dz = b1.position.z - b2.position.z;
-          double mag = sqrt(dx * dx + dy * dy + dz * dz);
-          double acceleration = -(b2.mass / (mag * mag));
-          b1.velocity.x += acceleration * (dx / mag);
-          b1.velocity.y += acceleration * (dy / mag);
-          b1.velocity.z += acceleration * (dz / mag);
+          double distance = sqrt(dx * dx + dy * dy + dz * dz);
+          double acceleration = -(b2.mass / (distance * distance));
+          b1.velocity.x += acceleration * (dx / distance);
+          b1.velocity.y += acceleration * (dy / distance);
+          b1.velocity.z += acceleration * (dz / distance);
         }
       }
     }
@@ -137,10 +139,8 @@ class HomeState extends State<Home>{
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Expanded(
-        // the empty child is needed to give the canvas a non-zero height
-        child: CustomPaint(painter: ScreenPainter(values), child: Container()),
-      ),
+      // the empty child is needed to give the canvas a non-zero height
+      Expanded(child: CustomPaint(painter: ScreenPainter(values), child: Container())),
       Padding(
         padding: const EdgeInsets.all(8.0),
         child: SizedBox(
@@ -189,6 +189,13 @@ class HomeState extends State<Home>{
                 callback: (v) => coreMass = v,
               ),
               SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Follow"),
+                  Switch(value: values.follow, onChanged: (v) => values.follow = v),
+                ],
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

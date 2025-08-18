@@ -18,6 +18,10 @@ class ScreenPainter extends CustomPainter{
 
     // put the origin in the middle of the screen
     canvas.translate(size.width/2, size.height/2);
+    // ...unless we are following the first galaxy
+    if(values.follow){
+      canvas.translate(-values.bodies[0].position.x, -values.bodies[0].position.y);
+    }
 
     for (Body b in values.bodies) {
       canvas.drawCircle(
