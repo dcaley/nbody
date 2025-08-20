@@ -1,16 +1,11 @@
 # nbody
 
-A new Flutter project.
+This was an attempt to see if I still remembered how to write a simple n-body simulation, which I had not done since college.
 
-## Getting Started
+On the whole, this was successful.  The math was definitely a bit rusty, but still in there.
 
-This project is a starting point for a Flutter application.
+This is not a serious simulation.  It is a simple Newtonian implementation, more optimized for looking good than being useful.  You won't find a tree or a mesh or even a constant for G.  I fiddled with values until things looked good.
 
-A few resources to get you started if this is your first Flutter project:
+The math is fully 3D, but everything is currently constrained to the X/Y plane, simply because Z doesn't really add anything to what I was trying to accomplish.  Maybe I will be motivated to change this at some point.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Yes, I'm aware of the [vector_math](https://pub.dev/packages/vector_math) package, but I my goal was to see if I could do without that sort of thing.  I might use it if I ever want to do anything more complicated.
