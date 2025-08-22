@@ -24,7 +24,7 @@ class Values{
   final List<Body> bodies = [];
 }
 
-class HomeState extends State<Home>{
+class HomeState extends State<Home> with SingleTickerProviderStateMixin{
 
   final random = Random();
   final colors = [Colors.red, Colors.blue, Colors.green, Colors.yellow, Colors.purple];
@@ -35,6 +35,7 @@ class HomeState extends State<Home>{
   int starCount = 50;
   double coreMass = 1000;
   final values = Values();
+  late final AnimationController animationController;
 
   List<Body> get bodies => values.bodies;
 
@@ -68,6 +69,12 @@ class HomeState extends State<Home>{
 
   @override
   initState(){
+
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 20),
+    )..repeat();
+
     create();
     // defer because we need screen size
     WidgetsBinding.instance.addPostFrameCallback((_) => startTimer());
@@ -109,8 +116,6 @@ class HomeState extends State<Home>{
         create();
         startTimer();
       }
-
-      setState(() {});
     });
   }
 
@@ -139,8 +144,13 @@ class HomeState extends State<Home>{
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      // the empty child is needed to give the canvas a non-zero height
-      Expanded(child: CustomPaint(painter: ScreenPainter(values), child: Container())),
+      Expanded(
+        child: CustomPaint(
+          painter: ScreenPainter(values, repaint: animationController),
+          // the empty child is needed to give the canvas a non-zero height
+          child: Container(),
+        ),
+      ),
       Padding(
         padding: const EdgeInsets.all(8.0),
         child: SizedBox(
@@ -156,7 +166,7 @@ class HomeState extends State<Home>{
                 divisions: 3,
                 ticks: 4,
                 labels: [2, 3, 4, 5].map((v) => Text(v.toStringAsFixed(0))).toList(),
-                callback: (v) => galaxyCount = v.toInt(),
+                callback: (v) => setState(() => galaxyCount = v.toInt()),
               ),
               SizedBox(height: 10),
               getSlider(
@@ -166,7 +176,7 @@ class HomeState extends State<Home>{
                 max: 200,
                 divisions: 3,
                 labels: [50, 100, 150, 200].map((v) => Text(v.toStringAsFixed(0))).toList(),
-                callback: (v) => galaxyRadius = v.toInt(),
+                callback: (v) => setState(() => galaxyRadius = v.toInt()),
               ),
               SizedBox(height: 10),
               getSlider(
@@ -176,7 +186,7 @@ class HomeState extends State<Home>{
                 max: 100,
                 divisions: 8,
                 labels: [20, 100].map((v) => Text(v.toStringAsFixed(0))).toList(),
-                callback: (v) => starCount = v.toInt(),
+                callback: (v) => setState(() => starCount = v.toInt()),
               ),
               SizedBox(height: 10),
               getSlider(
@@ -186,21 +196,21 @@ class HomeState extends State<Home>{
                 max: 10000,
                 divisions: 99,
                 labels: [2, 4].map((v) => Text("10^${v.toStringAsFixed(0)}")).toList(),
-                callback: (v) => coreMass = v,
+                callback: (v) => setState(() =>coreMass = v),
               ),
               SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Follow"),
-                  Switch(value: values.follow, onChanged: (v) => values.follow = v),
+                  Switch(value: values.follow, onChanged: (v) => setState(() => values.follow = v)),
                 ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Show Trails"),
-                  Switch(value: values.showTrails, onChanged: (v) => values.showTrails = v),
+                  Switch(value: values.showTrails, onChanged: (v) => setState(() => values.showTrails = v)),
                 ],
               ),
               SizedBox(height: 10),

@@ -7,7 +7,7 @@ class ScreenPainter extends CustomPainter{
 
   final Values values;
 
-  ScreenPainter(this.values);
+  ScreenPainter(this.values, {required super.repaint});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -57,5 +57,5 @@ class ScreenPainter extends CustomPainter{
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
