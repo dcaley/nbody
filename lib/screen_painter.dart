@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'body.dart';
+import 'core.dart';
 import 'home.dart';
 
 class ScreenPainter extends CustomPainter{
@@ -20,8 +21,12 @@ class ScreenPainter extends CustomPainter{
     canvas.translate(size.width/2, size.height/2);
     // ...unless we are following the first galaxy
     if(values.follow){
-      canvas.translate(-values.bodies[0].position.x, -values.bodies[0].position.y);
+      final core = values.bodies.firstWhere((b) => b is Core);
+      canvas.translate(-core.position.x, -core.position.y);
     }
+
+    // I want to use drawRawPoints here, but that doesn't help with the real bottleneck,
+    // which is the different paint for each trail.  So not worth the complication.
 
     for (Body b in values.bodies) {
       canvas.drawCircle(
@@ -41,13 +46,10 @@ class ScreenPainter extends CustomPainter{
         }
 
         canvas.drawPath(path, Paint()
+          ..isAntiAlias = true
           ..strokeWidth = b.paintSize
-          //..color = b.color
           ..shader = LinearGradient(
-            colors: [
-              b.color,
-              b.color.withValues(alpha: 0),
-            ],
+            colors: [b.color, b.color.withValues(alpha: 0)],
           ).createShader(Rect.fromLTRB(b.position.x, b.position.y, b.history.first.x, b.history.first.y))
           ..strokeWidth = b.paintSize
           ..style = PaintingStyle.stroke,
