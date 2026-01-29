@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math.dart' hide Colors;
 
 import 'screen_painter.dart';
 import 'star.dart';
-import 'vector.dart';
 import 'body.dart';
 import 'core.dart';
 
@@ -42,8 +42,8 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin{
   // the calculations are fully 3D, but constrain to x/y for now
   createGalaxy(double x, double y, double vx, double vy, Color color){
     final c = Core(
-      position: Vector(x: x, y: y),
-      velocity: Vector(x: vx, y: vy),
+      position: Vector3(x, y, 0),
+      velocity: Vector3(vx, vy, 0),
       mass: coreMass,
     );
     bodies.add(c);
@@ -57,9 +57,9 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin{
       bodies.add(
         Star(
           // rotate around the core
-          position: Vector(x: r*cos(theta), y: r*sin(theta)),
+          position: Vector3(r*cos(theta), r*sin(theta), 0),
           // do the same for the velocity vector
-          velocity: Vector(x: v*sin(-theta), y: v*cos(-theta)),
+          velocity: Vector3(v*sin(-theta), v*cos(-theta), 0),
           offset: c,
           color: color,
         ),

@@ -2,15 +2,14 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-
-import 'vector.dart';
+import 'package:vector_math/vector_math.dart' hide Colors;
 
 abstract class Body{
   
-  final Vector position;
-  final Queue<Vector> history = Queue();
+  final Vector3 position;
+  final Queue<Vector3> history = Queue();
   final int historyLength = 5;
-  final Vector velocity;
+  final Vector3 velocity;
   final double mass;
   final Color color;
   
@@ -26,7 +25,7 @@ abstract class Body{
   }
 
   void tick(){
-    history.add(Vector.from(position));
+    history.add(Vector3.copy(position));
     if(history.length>historyLength){
       history.removeFirst();
     }
