@@ -47,19 +47,25 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin{
       mass: coreMass,
     );
     bodies.add(c);
+
+    // add stars in orbit around the core
     for(int i=0; i<starCount; i++){
       // place the star at a random distance from the core, but not closer than 20
       double r = 20+random.nextDouble()*(galaxyRadius-20);
-      // set the velocity of a circular orbit at that radius
-      double v = sqrt(c.mass/r);
-      // add stars in orbit around the core
-      double theta = random.nextDouble()*pi*2;
+      final q = Quaternion.axisAngle(Vector3(0, 0, 1), random.nextDouble()*pi*2);
+
+      // rotate around the core
+      final position = Vector3(0, r, 0);
+      q.rotate(position);
+
+      // set the velocity to that of a circular orbit at the radius and rotate that too
+      final velocity = Vector3(sqrt(c.mass/r), 0, 0);
+      q.rotate(velocity);
+
       bodies.add(
         Star(
-          // rotate around the core
-          position: Vector3(r*cos(theta), r*sin(theta), 0),
-          // do the same for the velocity vector
-          velocity: Vector3(v*sin(-theta), v*cos(-theta), 0),
+          position: position,
+          velocity: velocity,
           offset: c,
           color: color,
         ),
