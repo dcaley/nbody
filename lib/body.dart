@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -7,7 +6,6 @@ import 'package:vector_math/vector_math.dart' hide Colors;
 abstract class Body{
   
   final Vector3 position;
-  final Queue<Vector3> history = Queue();
   final int historyLength = 5;
   final Vector3 velocity;
   final double mass;
@@ -25,25 +23,13 @@ abstract class Body{
   }
 
   void tick(){
-    history.add(Vector3.copy(position));
-    if(history.length>historyLength){
-      history.removeFirst();
-    }
-
     // add velocity vector to position vector
     position.x += velocity.x;
     position.y += velocity.y;
     position.z += velocity.z;
   }
 
-  // bodies with no mass have no effect
-  bool influencedBy(Body b) => b.mass > 0;
-
-  //double distance(Body b) => sqrt(pow(position.x-b.position.x, 2)+pow(position.y-b.position.y, 2)+pow(position.z-b.position.z, 2));
-
   double distance(double x, double y, double z) => sqrt(pow(position.x-x, 2)+pow(position.y-y, 2)+pow(position.z-z, 2));
 
   double get paintSize;
-
-  bool get showTrails => true;
 }

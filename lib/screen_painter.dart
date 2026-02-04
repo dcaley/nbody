@@ -1,12 +1,15 @@
-import 'package:flutter/material.dart';
+import 'dart:ui';
 
-import 'body.dart';
-import 'core.dart';
-import 'home.dart';
+import 'package:flutter/material.dart';
+import 'package:nbody/values.dart';
 
 class ScreenPainter extends CustomPainter{
 
   final Values values;
+  final gridPaint = Paint()
+    ..color = Colors.grey.shade900
+    ..strokeWidth = 1.0
+    ..isAntiAlias = false;
 
   ScreenPainter(this.values, {required super.repaint});
 
@@ -21,41 +24,23 @@ class ScreenPainter extends CustomPainter{
     canvas.translate(size.width/2, size.height/2);
     // ...unless we are following the first galaxy
     if(values.follow){
-      final core = values.bodies.firstWhere((b) => b is Core);
+      final core = values.cores.first;
       canvas.translate(-core.position.x, -core.position.y);
     }
 
-    // I want to use drawRawPoints here, but that doesn't help with the real bottleneck,
-    // which is the different paint for each trail.  So not worth the complication.
-
-    for (Body b in values.bodies) {
-      canvas.drawCircle(
-        Offset(b.position.x, b.position.y),
-        b.paintSize,
-        Paint()
-          ..color = b.color
-          ..style = PaintingStyle.fill,
+    for(Line l in values.grid){
+      canvas.drawLine(
+        Offset(l.$1.x, l.$1.y),
+        Offset(l.$2.x, l.$2.y),
+        gridPaint,
       );
-
-      // draw the "trails"
-      if(values.showTrails && b.showTrails && b.history.isNotEmpty) {
-
-        final path = Path()..moveTo(b.position.x, b.position.y);
-        for(int i=b.history.length-1; i>=0; i--){
-          path.lineTo(b.history.elementAt(i).x, b.history.elementAt(i).y);
-        }
-
-        canvas.drawPath(path, Paint()
-          ..isAntiAlias = true
-          ..strokeWidth = b.paintSize
-          ..shader = LinearGradient(
-            colors: [b.color, b.color.withValues(alpha: 0)],
-          ).createShader(Rect.fromLTRB(b.position.x, b.position.y, b.history.first.x, b.history.first.y))
-          ..strokeWidth = b.paintSize
-          ..style = PaintingStyle.stroke,
-        );
-      }
     }
+
+    values.paintPositions.forEach((k, v) => canvas.drawRawPoints(PointMode.points, v, Paint()
+      ..color = k
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round)
+    );
   }
 
   @override
