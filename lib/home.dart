@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:nbody/values.dart';
+import 'package:nbody/model.dart';
 
 import 'screen_painter.dart';
 

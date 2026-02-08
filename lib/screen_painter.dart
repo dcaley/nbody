@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:nbody/values.dart';
+import 'package:nbody/model.dart';
 
 class ScreenPainter extends CustomPainter{
 
