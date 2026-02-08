@@ -5,13 +5,13 @@ import 'package:nbody/values.dart';
 
 class ScreenPainter extends CustomPainter{
 
-  final Values values;
+  final Model model;
   final gridPaint = Paint()
     ..color = Colors.grey.shade900
     ..strokeWidth = 1.0
     ..isAntiAlias = false;
 
-  ScreenPainter(this.values, {required super.repaint});
+  ScreenPainter(this.model, {required super.repaint});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -23,12 +23,12 @@ class ScreenPainter extends CustomPainter{
     // put the origin in the middle of the screen
     canvas.translate(size.width/2, size.height/2);
     // ...unless we are following the first galaxy
-    if(values.follow){
-      final core = values.cores.first;
+    if(model.follow){
+      final core = model.cores.first;
       canvas.translate(-core.position.x, -core.position.y);
     }
 
-    for(Line l in values.grid){
+    for(Line l in model.grid){
       canvas.drawLine(
         Offset(l.$1.x, l.$1.y),
         Offset(l.$2.x, l.$2.y),
@@ -36,7 +36,7 @@ class ScreenPainter extends CustomPainter{
       );
     }
 
-    values.paintPositions.forEach((k, v) => canvas.drawRawPoints(PointMode.points, v, Paint()
+    model.paintPositions.forEach((k, v) => canvas.drawRawPoints(PointMode.points, v, Paint()
       ..color = k
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round)
