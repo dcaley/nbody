@@ -138,7 +138,7 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin{
               SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton(onPressed: timer.isActive ? null : model.calc(), child: Text("Step")),
+                child: OutlinedButton(onPressed: timer.isActive ? null : model.calc, child: Text("Step")),
               ),
               SizedBox(height: 10),
               SizedBox(
