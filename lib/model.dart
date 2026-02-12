@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -13,6 +14,9 @@ typedef Line = (Vector3 a, Vector3 b);
 
 // encapsulate values that we wish to share between the calculations and painter
 class Model{
+
+  // placeholder so this can be non-null
+  Timer timer = Timer(Duration(), (){});
 
   int galaxyCount = 5;
   int galaxyRadius = 100;
@@ -30,13 +34,15 @@ class Model{
   // instead, initialize them when we build the galaxies, then update the values when things change
   final bodies = <Body>[];
   final colorMap = <Color, List<Body>>{};
-  final paintPositions = <Color, Float32List>{};
+  final starPaintPositions = <Color, Float32List>{};
+  Float32List gridPaintPositions = Float32List(0);
 
   void buildPerfCollections(){
 
     bodies.clear();
     colorMap.clear();
-    paintPositions.clear();
+    starPaintPositions.clear();
+    gridPaintPositions = Float32List(4*grid.length);
 
     bodies.addAll(cores);
     bodies.addAll(stars);
@@ -51,7 +57,7 @@ class Model{
     }
 
     // initialize a list for each mapping
-    colorMap.forEach((k, v) => paintPositions[k] = Float32List(v.length*2));
+    colorMap.forEach((k, v) => starPaintPositions[k] = Float32List(v.length*2));
 
     updateFloatLists();
   }
@@ -60,8 +66,31 @@ class Model{
   void updateFloatLists() {
     colorMap.forEach((k, v) {
       for (int i = 0; i < v.length; i++) {
-        paintPositions[k]![i * 2] = v[i].position.x;
-        paintPositions[k]![i * 2 + 1] = v[i].position.y;
+        starPaintPositions[k]![i * 2] = v[i].position.x;
+        starPaintPositions[k]![i * 2 + 1] = v[i].position.y;
+      }
+    });
+
+    for(int i=0; i<grid.length; i++){
+      gridPaintPositions[i*4] = grid[i].$1.x;
+      gridPaintPositions[i*4+1] = grid[i].$1.y;
+      gridPaintPositions[i*4+2] = grid[i].$2.x;
+      gridPaintPositions[i*4+3] = grid[i].$2.y;
+    }
+  }
+
+  startTimer(){
+    timer.cancel();
+    final size = MediaQuery.of(NBody.appKey.currentContext!).size;
+    final screen = Rect.fromLTWH(-size.width/2, -size.height/2, size.width, size.height);
+    timer = Timer.periodic(Duration(milliseconds: 20), (t) {
+      // reset if all cores have moved offscreen
+      if(cores.any((c) => screen.contains(Offset(c.position.x, c.position.y)))){
+        calc();
+      }
+      else {
+        create();
+        startTimer();
       }
     });
   }
@@ -78,11 +107,13 @@ class Model{
       final r = 600.0+random.nextInt(200);
       final x = r*cos(theta);
       final y = r*sin(theta);
+      // put the galaxy a bit off the plane to create more "interesting" collisions
+      final z = flatten ? 0.0 : random.nextInt(200)-100.0;
 
       // ensure adequate spacing between galaxies
-      if(cores.every((c) => c.distance(x, y, 0)>600)){
+      if(cores.every((c) => c.distance(x, y, z)>600)){
         // give some variation to initial trajectory
-        createGalaxy(x, y, -(x+random.nextInt(400))/400, -(y+random.nextInt(400))/400, colors[i]);
+        createGalaxy(x, y, z, -(x+random.nextInt(400))/400, -(y+random.nextInt(400))/400, 0, colors[i]);
         i++;
       }
     }
@@ -92,11 +123,10 @@ class Model{
     buildPerfCollections();
   }
 
-  // the calculations are fully 3D, but constrain to x/y for now
-  createGalaxy(double x, double y, double vx, double vy, Color color){
+  createGalaxy(double x, double y, double z, double vx, double vy, double vz, Color color){
     final c = Core(
-      position: Vector3(x, y, 0),
-      velocity: Vector3(vx, vy, 0),
+      position: Vector3(x, y, z),
+      velocity: Vector3(vx, vy, vz),
       mass: coreMass,
     );
     cores.add(c);
@@ -130,15 +160,25 @@ class Model{
 
     grid.clear();
 
-    final width = MediaQuery.sizeOf(NBody.appKey.currentContext!).width;
-    final height = MediaQuery.sizeOf(NBody.appKey.currentContext!).width;
+    // TODO: be smarter about sizing
+    final width = MediaQuery.sizeOf(NBody.appKey.currentContext!).width-200;
+    final height = MediaQuery.sizeOf(NBody.appKey.currentContext!).height;
 
-    for(double i=-width/2; i<=width/2; i+=100){
-      grid.add((Vector3(i, -height/2, 0), Vector3(i, height/2, 0)));
+    int widthDivisions = (width/2)~/100;
+    int heightDivisions = (height/2)~/100;
+
+    for(int i=0; i<=widthDivisions; i++){
+      grid.add((Vector3(i*100, -heightDivisions*100, 0), Vector3(i*100, heightDivisions*100, 0)));
+      if(i>0){
+        grid.add((Vector3(-i*100, -heightDivisions*100, 0), Vector3(-i*100, heightDivisions*100, 0)));
+      }
     }
 
-    for(double i=-height/2; i<=height/2; i+=100){
-      grid.add((Vector3(-width/2, i, 0), Vector3(width/2, i, 0)));
+    for(int i=0; i<=heightDivisions; i++){
+      grid.add((Vector3(-widthDivisions*100, i*100, 0), Vector3(widthDivisions*100, i*100, 0)));
+      if(i>0){
+        grid.add((Vector3(-widthDivisions*100, -i*100, 0), Vector3(widthDivisions*100, -i*100, 0)));
+      }
     }
   }
 
@@ -166,6 +206,32 @@ class Model{
 
     // update the values to be painted
     updateFloatLists();
+  }
+
+  // TODO: persist rotation across restarts
+  void drag(Offset offset){
+
+    final qx = Quaternion.axisAngle(Vector3(0, 1, 0), offset.dx*pi/400);
+    final qy = Quaternion.axisAngle(Vector3(1, 0, 0), offset.dy*pi/400);
+
+    for (Body b in bodies) {
+      qx.rotate(b.position);
+      qx.rotate(b.velocity);
+      qy.rotate(b.position);
+      qy.rotate(b.velocity);
+    }
+
+    for(Line l in grid){
+      qx.rotate(l.$1);
+      qx.rotate(l.$2);
+      qy.rotate(l.$1);
+      qy.rotate(l.$2);
+    }
+
+    // if we're running, just let the next tick pick up the changes
+    if(!timer.isActive) {
+      updateFloatLists();
+    }
   }
 
 }

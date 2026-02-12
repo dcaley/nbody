@@ -28,15 +28,9 @@ class ScreenPainter extends CustomPainter{
       canvas.translate(-core.position.x, -core.position.y);
     }
 
-    for(Line l in model.grid){
-      canvas.drawLine(
-        Offset(l.$1.x, l.$1.y),
-        Offset(l.$2.x, l.$2.y),
-        gridPaint,
-      );
-    }
+    canvas.drawRawPoints(PointMode.lines, model.gridPaintPositions, gridPaint);
 
-    model.paintPositions.forEach((k, v) => canvas.drawRawPoints(PointMode.points, v, Paint()
+    model.starPaintPositions.forEach((k, v) => canvas.drawRawPoints(PointMode.points, v, Paint()
       ..color = k
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round)

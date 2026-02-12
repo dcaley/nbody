@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:nbody/model.dart';
 
@@ -15,8 +13,6 @@ class Home extends StatefulWidget{
 
 class HomeState extends State<Home> with SingleTickerProviderStateMixin{
 
-  // placeholder so this can be non-null
-  Timer timer = Timer(Duration(), (){});
   final model = Model();
   late final AnimationController animationController;
 
@@ -31,25 +27,9 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin{
     // defer because we need screen size
     WidgetsBinding.instance.addPostFrameCallback((_) {
       model.create();
-      startTimer();
+      model.startTimer();
     });
     super.initState();
-  }
-
-  startTimer(){
-    timer.cancel();
-    final size = MediaQuery.of(context).size;
-    final screen = Rect.fromLTWH(-size.width/2, -size.height/2, size.width, size.height);
-    timer = Timer.periodic(Duration(milliseconds: 20), (t) {
-      // reset if all cores have moved offscreen
-      if(model.cores.any((c) => screen.contains(Offset(c.position.x, c.position.y)))){
-        model.calc();
-      }
-      else {
-        model.create();
-        startTimer();
-      }
-    });
   }
   
   @override
@@ -59,94 +39,92 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin{
         child: CustomPaint(
           painter: ScreenPainter(model, repaint: animationController),
           // the empty child is needed to give the canvas a non-zero height
-          child: Container(),
+          child: GestureDetector(onPanUpdate: (d) => model.drag(d.delta)),
         ),
       ),
-      Padding(
+      Container(
         padding: const EdgeInsets.all(8.0),
-        child: SizedBox(
-          width: 200,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              getSlider(
-                title: "Galaxies",
-                value: model.galaxyCount.toDouble(),
-                min: 2,
-                max: 5,
-                divisions: 3,
-                ticks: 4,
-                labels: [2, 3, 4, 5].map((v) => Text(v.toStringAsFixed(0))).toList(),
-                callback: (v) => setState(() => model.galaxyCount = v.toInt()),
+        width: 200,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            getSlider(
+              title: "Galaxies",
+              value: model.galaxyCount.toDouble(),
+              min: 2,
+              max: 5,
+              divisions: 3,
+              ticks: 4,
+              labels: [2, 3, 4, 5].map((v) => Text(v.toStringAsFixed(0))).toList(),
+              callback: (v) => setState(() => model.galaxyCount = v.toInt()),
+            ),
+            SizedBox(height: 10),
+            getSlider(
+              title: "Galaxy Radius",
+              value: model.galaxyRadius.toDouble(),
+              min: 50,
+              max: 200,
+              divisions: 3,
+              labels: [50, 100, 150, 200].map((v) => Text(v.toStringAsFixed(0))).toList(),
+              callback: (v) => setState(() => model.galaxyRadius = v.toInt()),
+            ),
+            SizedBox(height: 10),
+            getSlider(
+              title: "Stars",
+              value: model.starCount.toDouble(),
+              min: 20,
+              max: 100,
+              divisions: 8,
+              labels: [20, 100].map((v) => Text(v.toStringAsFixed(0))).toList(),
+              callback: (v) => setState(() => model.starCount = v.toInt()),
+            ),
+            SizedBox(height: 10),
+            getSlider(
+              title: "Core Mass",
+              value: model.coreMass,
+              min: 100,
+              max: 10000,
+              divisions: 99,
+              labels: [2, 4].map((v) => Text("10^${v.toStringAsFixed(0)}")).toList(),
+              callback: (v) => setState(() => model.coreMass = v),
+            ),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Follow"),
+                Switch(value: model.follow, onChanged: (v) => setState(() => model.follow = v)),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Flatten"),
+                Switch(value: model.flatten, onChanged: (v) => setState(() => model.flatten = v)),
+              ],
+            ),
+            SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  model.timer.isActive ? model.timer.cancel() : model.startTimer();
+                  setState(() {});
+                },
+                child: Text(model.timer.isActive ? "Pause" : "Resume"),
               ),
-              SizedBox(height: 10),
-              getSlider(
-                title: "Galaxy Radius",
-                value: model.galaxyRadius.toDouble(),
-                min: 50,
-                max: 200,
-                divisions: 3,
-                labels: [50, 100, 150, 200].map((v) => Text(v.toStringAsFixed(0))).toList(),
-                callback: (v) => setState(() => model.galaxyRadius = v.toInt()),
-              ),
-              SizedBox(height: 10),
-              getSlider(
-                title: "Stars",
-                value: model.starCount.toDouble(),
-                min: 20,
-                max: 100,
-                divisions: 8,
-                labels: [20, 100].map((v) => Text(v.toStringAsFixed(0))).toList(),
-                callback: (v) => setState(() => model.starCount = v.toInt()),
-              ),
-              SizedBox(height: 10),
-              getSlider(
-                title: "Core Mass",
-                value: model.coreMass,
-                min: 100,
-                max: 10000,
-                divisions: 99,
-                labels: [2, 4].map((v) => Text("10^${v.toStringAsFixed(0)}")).toList(),
-                callback: (v) => setState(() => model.coreMass = v),
-              ),
-              SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("Follow"),
-                  Switch(value: model.follow, onChanged: (v) => setState(() => model.follow = v)),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("Flatten"),
-                  Switch(value: model.flatten, onChanged: (v) => setState(() => model.flatten = v)),
-                ],
-              ),
-              SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    timer.isActive ? timer.cancel() : startTimer();
-                    setState(() {});
-                  },
-                  child: Text(timer.isActive ? "Pause" : "Resume"),
-                ),
-              ),
-              SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(onPressed: timer.isActive ? null : model.calc, child: Text("Step")),
-              ),
-              SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(onPressed: model.create, child: Text("Restart")),
-              ),
-            ],
-          ),
+            ),
+            SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(onPressed: model.timer.isActive ? null : model.calc, child: Text("Step")),
+            ),
+            SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(onPressed: model.create, child: Text("Restart")),
+            ),
+          ],
         ),
       ),
     ],
