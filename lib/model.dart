@@ -79,7 +79,7 @@ class Model{
     }
   }
 
-  startTimer(){
+  void startTimer(){
     timer.cancel();
     final size = MediaQuery.of(NBody.appKey.currentContext!).size;
     final screen = Rect.fromLTWH(-size.width/2, -size.height/2, size.width, size.height);
@@ -95,7 +95,7 @@ class Model{
     });
   }
 
-  create(){
+  void create(){
 
     cores.clear();
     stars.clear();
@@ -123,7 +123,7 @@ class Model{
     buildPerfCollections();
   }
 
-  createGalaxy(double x, double y, double z, double vx, double vy, double vz, Color color){
+  void createGalaxy(double x, double y, double z, double vx, double vy, double vz, Color color){
     final c = Core(
       position: Vector3(x, y, z),
       velocity: Vector3(vx, vy, vz),
@@ -182,7 +182,7 @@ class Model{
     }
   }
 
-  calc() {
+  void calc() {
     double dx, dy, dz, distance, acceleration;
     for (Core b2 in cores) {
       for (Body b1 in bodies) {
