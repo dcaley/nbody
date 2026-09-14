@@ -225,24 +225,20 @@ class Model{
 
   void drag(Offset offset){
 
-    final qx = Quaternion.axisAngle(Vector3(0, 1, 0), offset.dx*pi/400);
-    final qy = Quaternion.axisAngle(Vector3(1, 0, 0), offset.dy*pi/400);
+    final q = Quaternion.axisAngle(Vector3(0, 1, 0), offset.dx*pi/400) *
+        Quaternion.axisAngle(Vector3(1, 0, 0), offset.dy*pi/400);
 
     // track total camera rotation
-    globalRotation = globalRotation * qx * qy;
+    globalRotation = globalRotation * q;
 
     for (Body b in bodies) {
-      qx.rotate(b.position);
-      qx.rotate(b.velocity);
-      qy.rotate(b.position);
-      qy.rotate(b.velocity);
+      q.rotate(b.position);
+      q.rotate(b.velocity);
     }
 
     for(Line l in grid){
-      qx.rotate(l.$1);
-      qx.rotate(l.$2);
-      qy.rotate(l.$1);
-      qy.rotate(l.$2);
+      q.rotate(l.$1);
+      q.rotate(l.$2);
     }
 
     // if we're running, just let the next tick pick up the changes
