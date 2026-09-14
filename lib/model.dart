@@ -114,15 +114,14 @@ class Model{
       final theta = random.nextDouble()*pi*2;
       // and at a random distance
       final r = 600.0+random.nextInt(200);
-      final x = r*cos(theta);
-      final y = r*sin(theta);
       // put the galaxy a bit off the plane to create more "interesting" collisions
-      final z = flatten ? 0.0 : random.nextInt(200)-100.0;
+      final p = Vector3(r*cos(theta), r*sin(theta), flatten ? 0.0 : random.nextInt(200)-100.0);
 
       // ensure adequate spacing between galaxies
-      if(cores.every((c) => c.distance(x, y, z)>600)){
+      if(cores.every((c) => c.position.distanceTo(p)>600)){
         // give some variation to initial trajectory
-        createGalaxy(x, y, z, -(x+random.nextInt(400))/400, -(y+random.nextInt(400))/400, 0, colors[i]);
+        final v = Vector3(-(p.x+random.nextInt(400))/400, -(p.y+random.nextInt(400))/400, 0);
+        createGalaxy(p, v, colors[i]);
         i++;
       }
     }
@@ -132,10 +131,10 @@ class Model{
     buildPerfCollections();
   }
 
-  void createGalaxy(double x, double y, double z, double vx, double vy, double vz, Color color){
+  void createGalaxy(Vector3 position, Vector3 velocity, Color color){
     final c = Core(
-      position: Vector3(x, y, z),
-      velocity: Vector3(vx, vy, vz),
+      position: position,
+      velocity: velocity,
       mass: coreMass,
     );
     cores.add(c);
