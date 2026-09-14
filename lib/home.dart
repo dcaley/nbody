@@ -72,10 +72,10 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin{
             getSlider(
               title: "Stars",
               value: model.starCount.toDouble(),
-              min: 20,
-              max: 100,
+              min: 100,
+              max: 1000,
               divisions: 8,
-              labels: [20, 100].map((v) => Text(v.toStringAsFixed(0))).toList(),
+              labels: [100, 1000].map((v) => Text(v.toStringAsFixed(0))).toList(),
               callback: (v) => setState(() => model.starCount = v.toInt()),
             ),
             SizedBox(height: 10),

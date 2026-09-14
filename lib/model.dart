@@ -20,7 +20,7 @@ class Model{
 
   int galaxyCount = 5;
   int galaxyRadius = 100;
-  int starCount = 100;
+  int starCount = 500;
   double coreMass = 1000;
   bool flatten = false;
   bool follow = false;
@@ -37,6 +37,9 @@ class Model{
   final starPaintPositions = <Color, Float32List>{};
   Float32List gridPaintPositions = Float32List(0);
 
+  // the combined "camera" rotation from mouse drags, persisted across restarts
+  Quaternion globalRotation = Quaternion.fromRotation(Matrix3.identity());
+
   void buildPerfCollections(){
 
     bodies.clear();
@@ -46,6 +49,12 @@ class Model{
 
     bodies.addAll(cores);
     bodies.addAll(stars);
+
+    // apply camera rotation
+    for (Body b in bodies) {
+      globalRotation.rotate(b.position);
+      globalRotation.rotate(b.velocity);
+    }
 
     // map colors to bodies
     for(Body b in bodies) {
@@ -180,6 +189,12 @@ class Model{
         grid.add((Vector3(-widthDivisions*100, -i*100, 0), Vector3(widthDivisions*100, -i*100, 0)));
       }
     }
+
+    // apply camera rotation
+    for(Line l in grid){
+      globalRotation.rotate(l.$1);
+      globalRotation.rotate(l.$2);
+    }
   }
 
   void calc() {
@@ -208,11 +223,13 @@ class Model{
     updateFloatLists();
   }
 
-  // TODO: persist rotation across restarts
   void drag(Offset offset){
 
     final qx = Quaternion.axisAngle(Vector3(0, 1, 0), offset.dx*pi/400);
     final qy = Quaternion.axisAngle(Vector3(1, 0, 0), offset.dy*pi/400);
+
+    // track total camera rotation
+    globalRotation = globalRotation * qx * qy;
 
     for (Body b in bodies) {
       qx.rotate(b.position);
